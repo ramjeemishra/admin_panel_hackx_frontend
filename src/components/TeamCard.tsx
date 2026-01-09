@@ -22,7 +22,7 @@ export default function TeamCard({ team }: { team: Team }) {
     setLoading(true);
     try {
       const res = await fetch(
-        `http://localhost:5000/api/teams/${team._id}/qrs`
+        `https://admin-panel-hackx-backend.onrender.com/api/teams/${team._id}/qrs`
       );
 
       if (!res.ok) {
