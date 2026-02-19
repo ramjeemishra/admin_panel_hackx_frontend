@@ -37,7 +37,7 @@ function TeamDetailsModal({ team, onClose }: { team: any; onClose: () => void })
       second: '2-digit',
       hour12: false,
       timeZone: 'Asia/Kolkata'
-    }).format(date).toUpperCase().replace(/,/g, ''); 
+    }).format(date).toUpperCase().replace(/,/g, '');
   };
 
   return (
@@ -139,7 +139,9 @@ export default function TeamCard({ team, index }: { team: Team; index: number })
 
   const people = [
     { name: team.lead.name, email: team.lead.email, role: "LEADER" },
-    ...team.members.map((m) => ({ name: m.fullName, email: m.email, role: "MEMBER" })),
+    ...(team.members ?? []).map((m) => ({
+      name: m.fullName, email: m.email, role: "MEMBER"
+    })),
   ];
 
   const generateQR = async () => {
