@@ -79,7 +79,6 @@ export default function Home() {
   const [retryMode, setRetryMode] = useState(false);
   const [search, setSearch] = useState("");
 
-  // 🔐 AUTO LOCK CHECK
   useEffect(() => {
     const interval = setInterval(() => {
       fetch("/api/super/status")
@@ -95,7 +94,6 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [navigate]);
 
-  // Fetch teams
   useEffect(() => {
     fetchTeams()
       .then((data) => {
@@ -146,7 +144,7 @@ export default function Home() {
       <StreamTerminal
         open={showQR}
         setOpen={setShowQR}
-        url="http://localhost:5000/api/admin/generate-all-qrs/stream"
+        url="https://admin-panel-hackx-backend.onrender.com/api/admin/generate-all-qrs/stream"
         title="QR DISPATCH TERMINAL"
         color="#e10600"
       />
@@ -159,8 +157,8 @@ export default function Home() {
         }}
         url={
           retryMode
-            ? "http://localhost:5000/api/admin/retry-failed-mails/stream"
-            : "http://localhost:5000/api/admin/send-all-leader-mails/stream"
+            ? "https://admin-panel-hackx-backend.onrender.com/api/admin/retry-failed-mails/stream"
+            : "https://admin-panel-hackx-backend.onrender.com/api/admin/send-all-leader-mails/stream"
         }
         title={retryMode ? "RETRY FAILED MAILS TERMINAL" : "MAIL DISPATCH TERMINAL"}
         color="#22c55e"
