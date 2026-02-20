@@ -79,20 +79,28 @@ export default function Home() {
   const [retryMode, setRetryMode] = useState(false);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetch("/api/super/status")
-        .then(res => res.json())
-        .then(data => {
-          if (!data.allowed) {
-            navigate("/");
-          }
-        })
-        .catch(() => navigate("/"));
-    }, 2000);
+useEffect(() => {
+  console.log("Admin polling started");
 
-    return () => clearInterval(interval);
-  }, [navigate]);
+  const checkStatus = async () => {
+    try {
+      const res = await fetch(
+        "https://admin-panel-hackx-backend.onrender.com/api/super/status"
+      );
+      const data = await res.json();
+
+      if (data.forceLogout === true) {
+        navigate("/");
+      }
+    } catch (err) {
+      console.error("unknown error:", err);
+    }
+  };
+
+  const interval = setInterval(checkStatus, 3000);
+
+  return () => clearInterval(interval);
+}, []);
 
   useEffect(() => {
     fetchTeams()
