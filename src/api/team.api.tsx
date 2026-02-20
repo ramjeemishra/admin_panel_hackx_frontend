@@ -24,7 +24,7 @@ export interface Team {
 
 
 export const fetchTeams = async (): Promise<Team[]> => {
-  const res = await fetch("https://admin-panel-hackx-backend.onrender.com/api/teams");
-  // const res = await fetch("http://localhost:5000/api/teams");
+  // const res = await fetch("https://admin-panel-hackx-backend.onrender.com/api/teams");
+  const res = await fetch("http://localhost:5000/api/teams");
   return res.json();
 };

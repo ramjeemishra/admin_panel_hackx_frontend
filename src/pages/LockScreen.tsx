@@ -8,7 +8,7 @@ export default function LockScreen() {
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/super/verify", {
+        const res = await fetch("https://admin-panel-hackx-backend.onrender.com/api/super/verify", {
           method: "POST",
         });
 
