@@ -1,8 +1,17 @@
-// admin panel code
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchTeams, Team } from "../api/team.api";
 import TeamCard from "../components/TeamCard";
+
+const THEME = {
+  bg: "#020617",
+  surface: "#0f172a",
+  border: "#1e293b",
+  accent: "#e10600",
+  success: "#22c55e",
+  text: "#f8fafc",
+  muted: "#94a3b8"
+};
 
 function StreamTerminal({
   open,
@@ -19,49 +28,44 @@ function StreamTerminal({
 }) {
   const [logs, setLogs] = useState<string[]>([]);
   const eventRef = useRef<EventSource | null>(null);
-
-  const getLogStyle = (log: string) => {
-    if (log.includes("✓")) return { color: "#22c55e" };
-    if (log.includes("✗")) return { color: "#ef4444" };
-    return { color: "#94a3b8" };
-  };
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
-
     setLogs([]);
-    if (eventRef.current) eventRef.current.close();
-
     const es = new EventSource(url);
     eventRef.current = es;
-
-    es.onmessage = (e) => {
-      setLogs((prev) => [...prev, e.data]);
-    };
-
+    es.onmessage = (e) => setLogs((prev) => [...prev, e.data]);
     es.onerror = () => {
       es.close();
       eventRef.current = null;
     };
-
     return () => es.close();
   }, [open, url]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [logs]);
 
   if (!open) return null;
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 9999, display: "flex", justifyContent: "center", alignItems: "center", padding: 40 }}>
-      <div style={{ width: "100%", maxWidth: 1100, height: "85vh", background: "#0b0f19", border: `1px solid ${color}`, display: "flex", flexDirection: "column" }}>
-        <div style={{ padding: "16px 24px", background: color, color: "#000", display: "flex", justifyContent: "space-between", fontWeight: 900 }}>
-          <span>{title}</span>
-          <button onClick={() => setOpen(false)} style={{ background: "transparent", border: "1px solid #000", padding: "4px 10px", cursor: "pointer", fontWeight: 800 }}>
-            CLOSE
-          </button>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(2, 6, 23, 0.95)", zIndex: 9999, display: "flex", justifyContent: "center", alignItems: "center", backdropFilter: "blur(8px)" }}>
+      <div style={{ width: "90%", maxWidth: "1000px", height: "80vh", background: "#000", border: `1px solid ${THEME.border}`, borderRadius: "8px", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: `0 0 40px -10px ${color}44` }}>
+        <div style={{ padding: "12px 20px", background: "#111", borderBottom: `1px solid ${THEME.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: color, boxShadow: `0 0 8px ${color}` }} />
+            <span style={{ fontSize: "12px", fontWeight: 700, letterSpacing: "1px", color: "#fff" }}>{title}</span>
+          </div>
+          <button onClick={() => setOpen(false)} style={{ background: "transparent", border: "none", color: THEME.muted, cursor: "pointer", fontSize: "20px" }}>×</button>
         </div>
-        <div style={{ flex: 1, padding: 24, overflowY: "auto", fontFamily: "monospace", fontSize: 13 }}>
+        <div ref={scrollRef} style={{ flex: 1, padding: "20px", overflowY: "auto", fontFamily: "'Fira Code', monospace", fontSize: "13px", lineHeight: "1.6", background: "linear-gradient(rgba(18, 18, 18, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03))", backgroundSize: "100% 4px, 3px 100%" }}>
           {logs.map((log, i) => (
-            <div key={i} style={{ marginBottom: 6, ...getLogStyle(log) }}>
-              {`[LOG_${i}] > ${log}`}
+            <div key={i} style={{ color: log.includes("✓") ? THEME.success : log.includes("✗") ? THEME.accent : "#888" }}>
+              <span style={{ opacity: 0.4, marginRight: "10px" }}>[{i.toString().padStart(3, "0")}]</span>
+              {log}
             </div>
           ))}
         </div>
@@ -72,7 +76,6 @@ function StreamTerminal({
 
 export default function Home() {
   const navigate = useNavigate();
-
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [showQR, setShowQR] = useState(false);
@@ -80,147 +83,110 @@ export default function Home() {
   const [retryMode, setRetryMode] = useState(false);
   const [search, setSearch] = useState("");
 
-// useEffect(() => {
-//   console.log("Admin polling started");
-
-//   const checkStatus = async () => {
-//     try {
-//       const res = await fetch(
-//         "https://admin-panel-hackx-backend.onrender.com/api/super/status"
-//       );
-//       const data = await res.json();
-
-//       if (data.forceLogout === true) {
-//         navigate("/");
-//       }
-//     } catch (err) {
-//       console.error("unknown error:", err);
-//     }
-//   };
-
-//   const interval = setInterval(checkStatus, 3000);
-
-//   return () => clearInterval(interval);
-// }, []);
+  const isProduction = import.meta.env.PROD;
 
   useEffect(() => {
-    fetchTeams()
-      .then((data) => {
-        setTeams(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    fetchTeams().then((data) => {
+      setTeams(data);
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, []);
 
   useEffect(() => {
-    if (!showMail && !showQR) {
-      fetchTeams().then(setTeams);
-    }
+    if (!showMail && !showQR) fetchTeams().then(setTeams);
   }, [showMail, showQR]);
 
-  const totalTeams = useMemo(() => teams.length, [teams]);
-  const sentCount = useMemo(() => teams.filter(t => t.mailStatus === "SENT").length, [teams]);
-  const failedCount = useMemo(() => teams.filter(t => t.mailStatus === "FAILED").length, [teams]);
-  const pendingCount = useMemo(() => teams.filter(t => t.mailStatus !== "SENT").length, [teams]);
+  const stats = useMemo(() => ({
+    total: teams.length,
+    sent: teams.filter(t => t.mailStatus === "SENT").length,
+    failed: teams.filter(t => t.mailStatus === "FAILED").length,
+    pending: teams.filter(t => t.mailStatus !== "SENT").length
+  }), [teams]);
 
   const filteredTeams = useMemo(() => {
-    if (!search.trim()) return teams;
-
-    const query = search.toLowerCase();
-
-    return teams.filter((team: any) => {
-      const teamMatch =
-        team.teamName?.toLowerCase().includes(query) ||
-        team.teamCode?.toLowerCase().includes(query);
-
-      const leaderMatch =
-        team.lead?.name?.toLowerCase().includes(query) ||
-        team.lead?.email?.toLowerCase().includes(query) ||
-        team.lead?.phone?.includes(query);
-
-      const memberMatch = team.members?.some((m: any) =>
-        m.fullName?.toLowerCase().includes(query) ||
-        m.email?.toLowerCase().includes(query) ||
-        m.phone?.includes(query)
-      );
-
-      return teamMatch || leaderMatch || memberMatch;
-    });
+    const q = search.toLowerCase().trim();
+    if (!q) return teams;
+    return teams.filter(t =>
+      t.teamName?.toLowerCase().includes(q) ||
+      t.lead?.name?.toLowerCase().includes(q) ||
+      t.lead?.email?.toLowerCase().includes(q)
+    );
   }, [teams, search]);
 
+  const btnStyle = (bg = THEME.surface, color = "#fff", isDisabled = false) => ({
+    padding: "8px 16px",
+    background: isDisabled ? "#1e293b" : bg,
+    color: isDisabled ? "#475569" : color,
+    border: `1px solid ${isDisabled ? "#1e293b" : THEME.border}`,
+    borderRadius: "4px",
+    cursor: isDisabled ? "not-allowed" : "pointer",
+    fontSize: "13px",
+    fontWeight: 600,
+    transition: "all 0.2s",
+    opacity: isDisabled ? 0.5 : 1
+  });
+
   return (
-    <div style={{ backgroundColor: "#070b14", minHeight: "100vh", color: "#fff", fontFamily: "'Inter', sans-serif" }}>
-      <StreamTerminal
-        open={showQR}
-        setOpen={setShowQR}
-        url="https://admin-panel-hackx-backend.onrender.com/api/admin/generate-all-qrs/stream"
-        // url="http://localhost:5000/api/admin/generate-all-qrs/stream"
-        title="QR DISPATCH TERMINAL"
-        color="#e10600"
-      />
+    <div style={{ backgroundColor: THEME.bg, minHeight: "100vh", color: THEME.text, fontFamily: "'Inter', system-ui, sans-serif" }}>
+      <StreamTerminal open={showQR} setOpen={setShowQR} title="SYSTEM::QR_GENERATOR" color={THEME.accent} url="https://admin-panel-hackx-backend.onrender.com/api/admin/generate-all-qrs/stream" />
+      <StreamTerminal open={showMail} setOpen={(v) => { setShowMail(v); setRetryMode(false); }} title={retryMode ? "SYSTEM::RETRY_ENGINE" : "SYSTEM::MAIL_DISPATCH"} color={THEME.success} url={retryMode ? "http://localhost:5000/api/admin/retry-failed-mails/stream" : "http://localhost:5000/api/admin/send-all-leader-mails/stream"} />
 
-      <StreamTerminal
-        open={showMail}
-        setOpen={(v) => {
-          setShowMail(v);
-          setRetryMode(false);
-        }}
-        url={
-          retryMode
-            ? "https://admin-panel-hackx-backend.onrender.com/api/admin/retry-failed-mails/stream"
-            : "https://admin-panel-hackx-backend.onrender.com/api/admin/send-all-leader-mails/stream"
-        }
-        title={retryMode ? "RETRY FAILED MAILS TERMINAL" : "MAIL DISPATCH TERMINAL"}
-        color="#22c55e"
-      />
+      <nav style={{ padding: "16px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${THEME.border}`, background: "rgba(15, 23, 42, 0.8)", backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 100 }}>
+        <h2 style={{ letterSpacing: "-1px", margin: 0, fontSize: "20px" }}>HACK<span style={{ color: THEME.accent }}>X</span> <span style={{ fontWeight: 300, color: THEME.muted }}>CONSOLE</span></h2>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button style={btnStyle()} onClick={() => setShowQR(true)}>Generate QRs</button>
 
-      <nav style={{ padding: "20px 48px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #1e293b" }}>
-        <h2 style={{ fontWeight: 900, fontSize: 22, margin: 0 }}>
-          HACK<span style={{ color: "#e10600" }}>X</span> ADMIN
-        </h2>
-
-        <div style={{ display: "flex", gap: 18 }}>
-          <button onClick={() => setShowQR(true)}>Generate All QRs</button>
-          <button onClick={() => { setRetryMode(false); setShowMail(true); }} disabled={pendingCount === 0}>
-            Send Mail At Once
+          <button
+            style={btnStyle(THEME.success, "#000", stats.pending === 0 || isProduction)}
+            onClick={() => { setRetryMode(false); setShowMail(true); }}
+            disabled={stats.pending === 0 || isProduction}
+          >
+            Dispatch Mails
           </button>
-          <button onClick={() => { setRetryMode(true); setShowMail(true); }} disabled={failedCount === 0}>
+
+          <button
+            style={btnStyle(THEME.accent, "#fff", stats.failed === 0 || isProduction)}
+            onClick={() => { setRetryMode(true); setShowMail(true); }}
+            disabled={stats.failed === 0 || isProduction}
+          >
             Retry Failed
           </button>
-          <button onClick={() => navigate("/filters")}>Filters</button>
-          <button onClick={() => navigate("/upload-csv")}>Upload CSV</button>
+
+          <div style={{ width: "1px", background: THEME.border, margin: "0 10px" }} />
+          <button style={btnStyle()} onClick={() => navigate("/filters")}>Filters</button>
+          <button style={btnStyle()} onClick={() => navigate("/upload-csv")}>Import CSV</button>
         </div>
       </nav>
 
-      <main style={{ padding: "60px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20, marginBottom: 40 }}>
-          <div>Total Teams: {totalTeams}</div>
-          <div>Sent: {sentCount}</div>
-          <div>Failed: {failedCount}</div>
-          <div>Pending: {pendingCount}</div>
+      <main style={{ maxWidth: "1400px", margin: "0 auto", padding: "40px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginBottom: "40px" }}>
+          {[
+            { label: "Total Registrations", value: stats.total, color: THEME.text },
+            { label: "Delivery Success", value: stats.sent, color: THEME.success },
+            { label: "Delivery Failures", value: stats.failed, color: THEME.accent },
+            { label: "Remaining", value: stats.pending, color: THEME.muted }
+          ].map((s, i) => (
+            <div key={i} style={{ background: THEME.surface, padding: "20px", borderRadius: "12px", border: `1px solid ${THEME.border}` }}>
+              <div style={{ fontSize: "12px", color: THEME.muted, marginBottom: "8px", textTransform: "uppercase", fontWeight: 700 }}>{s.label}</div>
+              <div style={{ fontSize: "28px", fontWeight: 800, color: s.color }}>{s.value}</div>
+            </div>
+          ))}
         </div>
 
-        <div style={{ marginBottom: 40 }}>
+        <div style={{ position: "relative", marginBottom: "32px" }}>
           <input
             type="text"
-            placeholder="Search by team name, member name, email or phone..."
+            placeholder="Filter by team, leader, or contact details..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "14px 18px",
-              background: "#0f172a",
-              border: "1px solid #1e293b",
-              color: "#fff",
-              fontSize: 14,
-            }}
+            style={{ width: "100%", padding: "16px 20px", background: THEME.surface, border: `1px solid ${THEME.border}`, borderRadius: "8px", color: "#fff", outline: "none", fontSize: "15px" }}
           />
         </div>
 
         {loading ? (
-          <div>Loading...</div>
+          <div style={{ textAlign: "center", padding: "100px", color: THEME.muted }}>Initializing interface...</div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 32 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))", gap: "24px" }}>
             {filteredTeams.map((team, index) => (
               <TeamCard key={team._id} team={team} index={index} />
             ))}
