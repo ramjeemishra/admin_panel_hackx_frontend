@@ -1,3 +1,4 @@
+// admin panel code
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchTeams, Team } from "../api/team.api";
@@ -79,28 +80,28 @@ export default function Home() {
   const [retryMode, setRetryMode] = useState(false);
   const [search, setSearch] = useState("");
 
-useEffect(() => {
-  console.log("Admin polling started");
+// useEffect(() => {
+//   console.log("Admin polling started");
 
-  const checkStatus = async () => {
-    try {
-      const res = await fetch(
-        "https://admin-panel-hackx-backend.onrender.com/api/super/status"
-      );
-      const data = await res.json();
+//   const checkStatus = async () => {
+//     try {
+//       const res = await fetch(
+//         "https://admin-panel-hackx-backend.onrender.com/api/super/status"
+//       );
+//       const data = await res.json();
 
-      if (data.forceLogout === true) {
-        navigate("/");
-      }
-    } catch (err) {
-      console.error("unknown error:", err);
-    }
-  };
+//       if (data.forceLogout === true) {
+//         navigate("/");
+//       }
+//     } catch (err) {
+//       console.error("unknown error:", err);
+//     }
+//   };
 
-  const interval = setInterval(checkStatus, 3000);
+//   const interval = setInterval(checkStatus, 3000);
 
-  return () => clearInterval(interval);
-}, []);
+//   return () => clearInterval(interval);
+// }, []);
 
   useEffect(() => {
     fetchTeams()
