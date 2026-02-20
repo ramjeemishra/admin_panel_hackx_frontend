@@ -147,7 +147,7 @@ export default function TeamCard({ team, index }: { team: Team; index: number })
   const generateQR = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/teams/${team._id}/qrs`);
+      const res = await fetch(`https://admin-panel-hackx-backend.onrender.com/api/teams/${team._id}/qrs`);
       const data = await res.json();
       setQr(Array.isArray(data) ? data[0]?.qr : data.qr);
     } catch (err) { console.error(err); }
@@ -157,7 +157,7 @@ export default function TeamCard({ team, index }: { team: Team; index: number })
   const sendTestMail = async () => {
     setMailLoading(true);
     try {
-      await fetch(`http://localhost:5000/api/admin/send-qr-mail/${team._id}`, { method: "POST" });
+      await fetch(`https://admin-panel-hackx-backend.onrender.com/api/admin/send-qr-mail/${team._id}`, { method: "POST" });
       alert(`Radio check: Mail sent to ${team.lead.email}`);
     } catch (err) { alert("Pit stop error: Mail failed"); }
     finally { setMailLoading(false); }

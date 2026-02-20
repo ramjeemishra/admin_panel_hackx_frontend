@@ -145,6 +145,7 @@ export default function Home() {
         open={showQR}
         setOpen={setShowQR}
         url="https://admin-panel-hackx-backend.onrender.com/api/admin/generate-all-qrs/stream"
+        // url="http://localhost:5000/api/admin/generate-all-qrs/stream"
         title="QR DISPATCH TERMINAL"
         color="#e10600"
       />
