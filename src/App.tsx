@@ -6,6 +6,8 @@ import LockScreen from "./pages/LockScreen";
 import Admin from "./pages/Admin";
 
 export default function App() {
+  const APP_ID = "admin-panel";
+
   const [locked, setLocked] = useState(false);
   const [checking, setChecking] = useState(true);
 
@@ -13,7 +15,7 @@ export default function App() {
     const checkStatus = async () => {
       try {
         const res = await fetch(
-          `https://admin-panel-hackx-backend.onrender.com/api/super/status?t=${Date.now()}`
+          `https://admin-panel-hackx-backend.onrender.com/api/super/status?appId=${APP_ID}&t=${Date.now()}`
         );
 
         const data = await res.json();
