@@ -76,7 +76,17 @@ function TeamDetailsModal({ team, onClose }: { team: any; onClose: () => void })
                   <div style={{ fontSize: 12, fontWeight: 800, color: "#475569" }}>{meal}</div>
                   <div style={{ fontSize: 13 }}>
                     {team.foodStatus?.[meal]?.length > 0 ? (
-                      <span style={{ color: "#22c55e" }}>{team.foodStatus[meal].join(", ")}</span>
+                      <span style={{ color: "#22c55e" }}>
+                        {team.foodStatus[meal]
+                          .map((email: string) => {
+                            const member = team.members.find(
+                              (m: any) => m.email === email
+                            );
+
+                            return member ? member.fullName.toUpperCase() : "UNKNOWN";
+                          })
+                          .join(", ")}
+                      </span>
                     ) : (
                       <span style={{ color: "#475569" }}>No logs recorded</span>
                     )}
