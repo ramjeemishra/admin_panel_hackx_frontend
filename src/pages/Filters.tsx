@@ -1,14 +1,15 @@
+// filters and stats page
 import { useEffect, useMemo, useState } from "react";
 import { fetchTeams } from "../api/team.api";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Users,
-  Utensils,
-  Trophy,
-  UserCheck,
-  ChevronLeft,
+import { 
+  Users, 
+  Utensils, 
+  Trophy, 
+  UserCheck, 
+  ChevronLeft, 
   ChevronRight,
-  Zap,
+  Zap
 } from "lucide-react";
 
 const PAGE_SIZE = 12;
@@ -37,21 +38,26 @@ export default function AdminDashboard() {
   const allParticipants = useMemo(() => {
     const list: any[] = [];
     teams.forEach((team) => {
+      const teamCode = team.teamCode;
+      const teamName = team.teamName;
       list.push({
         role: "LEADER",
         name: team.lead?.name,
         email: team.lead?.email,
+        phone: team.lead?.phone,
         present: team.attendance === true,
-        teamCode: team.teamCode,
-        attendance: team.attendance,
+        teamCode,
+        teamName,
       });
       team.members?.forEach((m: any) => {
         list.push({
           role: "MEMBER",
           name: m.fullName,
           email: m.email,
+          phone: m.phone,
           present: m.present === true,
-          teamCode: team.teamCode,
+          teamCode,
+          teamName,
         });
       });
     });
@@ -68,58 +74,38 @@ export default function AdminDashboard() {
     return teams.flatMap((team) => {
       const list: any[] = [];
       const mealArray = team.foodStatus?.[mealType] || [];
-
       const leaderReceived = mealArray.includes(team.lead?.email);
       if (foodReceived ? leaderReceived : !leaderReceived) {
-        list.push({
-          role: "LEADER",
-          name: team.lead?.name,
-          email: team.lead?.email,
-          teamCode: team.teamCode,
-        });
+        list.push({ role: "LEADER", name: team.lead?.name, email: team.lead?.email, teamCode: team.teamCode });
       }
-
       team.members?.forEach((m: any) => {
         const received = mealArray.includes(m.email);
         if (foodReceived ? received : !received) {
-          list.push({
-            role: "MEMBER",
-            name: m.fullName,
-            email: m.email,
-            teamCode: team.teamCode,
-          });
+          list.push({ role: "MEMBER", name: m.fullName, email: m.email, teamCode: team.teamCode });
         }
       });
-
       return list;
     });
   }, [teams, mealType, foodReceived]);
 
   const leadData = useMemo(() => {
     return teams.filter((team) =>
-      leadFilter === "PRESENT"
-        ? team.attendance === true
-        : team.attendance === false
+      leadFilter === "PRESENT" ? team.attendance === true : team.attendance === false
     );
   }, [teams, leadFilter]);
 
   const memberData = useMemo(() => {
-    return allParticipants.filter((p) =>
-      memberRoleFilter === "ALL" ? true : p.role === memberRoleFilter
-    );
+    return allParticipants
+      .filter((p) => memberRoleFilter === "ALL" ? true : p.role === memberRoleFilter)
+      .sort((a, b) => a.teamCode.localeCompare(b.teamCode));
   }, [allParticipants, memberRoleFilter]);
 
   const activeData =
-    section === "ATTENDANCE"
-      ? attendanceData
-      : section === "FOOD"
-      ? foodData
-      : section === "LEADS"
-      ? leadData
-      : memberData;
+    section === "ATTENDANCE" ? attendanceData : 
+    section === "FOOD" ? foodData : 
+    section === "LEADS" ? leadData : memberData;
 
   const totalPages = Math.ceil(activeData.length / PAGE_SIZE);
-
   const paginatedData = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
     return activeData.slice(start, start + PAGE_SIZE);
@@ -130,11 +116,13 @@ export default function AdminDashboard() {
       <header style={styles.header}>
         <div style={styles.logoBox}>
           <Zap fill="#FF1801" color="#FF1801" size={28} />
-          <h1 style={styles.title}>
-            F1 <span style={{ color: "#FF1801" }}>Monitoring Page</span>
-          </h1>
+          <h1 style={styles.title}>F1 <span style={{ color: "#FF1801" }}>Monitoring Page</span></h1>
         </div>
-        <span style={styles.telemetry}>Fast as fuck 💕💕</span>
+        
+        <div style={styles.telemetry}>
+          <span>💞 Fast as Fuck 💞</span>
+          <div style={styles.blink} />
+        </div>
       </header>
 
       <nav style={styles.nav}>
@@ -146,15 +134,13 @@ export default function AdminDashboard() {
         ].map((tab) => (
           <motion.button
             key={tab.id}
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ skewX: -10, scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              setSection(tab.id);
-              setPage(1);
-            }}
+            onClick={() => { setSection(tab.id); setPage(1); }}
             style={{
               ...styles.tab,
               background: section === tab.id ? "#FF1801" : "#15151e",
+              borderBottom: section === tab.id ? "4px solid #fff" : "4px solid transparent",
             }}
           >
             {tab.icon} {tab.label}
@@ -164,65 +150,33 @@ export default function AdminDashboard() {
 
       <div style={styles.filterSection}>
         {section === "ATTENDANCE" && (
-          <select
-            style={styles.select}
-            value={attendanceFilter}
-            onChange={(e) => setAttendanceFilter(e.target.value)}
-          >
+          <select style={styles.select} value={attendanceFilter} onChange={(e) => setAttendanceFilter(e.target.value)}>
             <option value="PRESENT">PRESENT</option>
             <option value="ABSENT">ABSENT</option>
           </select>
         )}
 
         {section === "FOOD" && (
-          <>
-            <button
-              style={{
-                ...styles.subBtn,
-                opacity: foodReceived ? 1 : 0.5,
-              }}
-              onClick={() => setFoodReceived(true)}
-            >
-              SERVED
-            </button>
-            <button
-              style={{
-                ...styles.subBtn,
-                opacity: !foodReceived ? 1 : 0.5,
-              }}
-              onClick={() => setFoodReceived(false)}
-            >
-              EMPTY
-            </button>
-            <select
-              style={styles.select}
-              value={mealType}
-              onChange={(e) => setMealType(e.target.value)}
-            >
+          <div style={{ display: "flex", gap: 10 }}>
+            <button style={{...styles.subBtn, opacity: foodReceived ? 1 : 0.5}} onClick={() => setFoodReceived(true)}>Served</button>
+            <button style={{...styles.subBtn, opacity: !foodReceived ? 1 : 0.5}} onClick={() => setFoodReceived(false)}>EMPTY</button>
+            <select style={styles.select} value={mealType} onChange={(e) => setMealType(e.target.value)}>
               <option value="BREAKFAST">BREAKFAST</option>
               <option value="LUNCH">LUNCH</option>
               <option value="DINNER">DINNER</option>
             </select>
-          </>
+          </div>
         )}
 
         {section === "LEADS" && (
-          <select
-            style={styles.select}
-            value={leadFilter}
-            onChange={(e) => setLeadFilter(e.target.value)}
-          >
+          <select style={styles.select} value={leadFilter} onChange={(e) => setLeadFilter(e.target.value)}>
             <option value="PRESENT">PRESENT</option>
             <option value="ABSENT">ABSENT</option>
           </select>
         )}
 
         {section === "MEMBERS" && (
-          <select
-            style={styles.select}
-            value={memberRoleFilter}
-            onChange={(e) => setMemberRoleFilter(e.target.value)}
-          >
+          <select style={styles.select} value={memberRoleFilter} onChange={(e) => setMemberRoleFilter(e.target.value)}>
             <option value="ALL">ALL</option>
             <option value="LEADER">LEADER</option>
             <option value="MEMBER">MEMBER</option>
@@ -233,88 +187,28 @@ export default function AdminDashboard() {
       <main style={styles.main}>
         <AnimatePresence mode="wait">
           {loading ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              style={styles.loading}
-            >
-              LOADING...
-            </motion.div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={styles.status}>LOADING ENGINE...</motion.div>
           ) : (
             <motion.div
               key={section + page}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -20, opacity: 0 }}
               style={styles.grid}
             >
               {paginatedData.map((item: any, i: number) => (
-                <motion.div
-                  key={i}
-                  whileHover={{ y: -3 }}
+                <motion.div 
+                  key={i} 
+                  whileHover={{ x: 5, backgroundColor: "#1f1f27" }}
                   style={styles.card}
                 >
-                  <div style={styles.cardTop}>
-                    <span style={styles.code}>
-                      {item.teamCode || item.teamName}
-                    </span>
-                    <span
-                      style={{
-                        ...styles.roleBadge,
-                        background:
-                          item.role === "LEADER" ? "#FF1801" : "#2d2d37",
-                      }}
-                    >
-                      {item.role || "TEAM"}
-                    </span>
-                  </div>
-
-                  <div style={styles.name}>
-                    {item.name || item.lead?.name}
-                  </div>
-
-                  <div style={styles.bottom}>
-                    {section === "ATTENDANCE" && (
-                      <span
-                        style={{
-                          ...styles.status,
-                          background: item.present
-                            ? "#064e3b"
-                            : "#450a0a",
-                          color: item.present
-                            ? "#34d399"
-                            : "#f87171",
-                        }}
-                      >
-                        {item.present ? "PRESENT" : "ABSENT"}
-                      </span>
-                    )}
-
-                    {section === "FOOD" && (
-                      <span style={styles.status}>{mealType}</span>
-                    )}
-
-                    {section === "LEADS" && (
-                      <span
-                        style={{
-                          ...styles.status,
-                          background: item.attendance
-                            ? "#064e3b"
-                            : "#450a0a",
-                          color: item.attendance
-                            ? "#34d399"
-                            : "#f87171",
-                        }}
-                      >
-                        {item.attendance ? "VERIFIED" : "PENDING"}
-                      </span>
-                    )}
-
-                    {section === "MEMBERS" && (
-                      <span style={styles.email}>
-                        {item.email}
-                      </span>
-                    )}
+                  <div style={styles.cardRank}>{((page - 1) * PAGE_SIZE) + i + 1}</div>
+                  <div style={styles.cardBody}>
+                    <div style={styles.cardTop}>
+                      <span style={styles.code}>{item.teamCode || "F1"}</span>
+                      <span style={styles.name}>{item.name || item.lead.name}</span>
+                    </div>
+                    <div style={styles.cardBottom}>{item.role} | {item.email || item.teamName}</div>
                   </div>
                 </motion.div>
               ))}
@@ -324,23 +218,9 @@ export default function AdminDashboard() {
       </main>
 
       <footer style={styles.footer}>
-        <button
-          disabled={page === 1}
-          onClick={() => setPage((p) => p - 1)}
-          style={styles.pageBtn}
-        >
-          <ChevronLeft size={18} />
-        </button>
-        <span style={styles.pageText}>
-          LAP {page} / {totalPages || 1}
-        </span>
-        <button
-          disabled={page === totalPages}
-          onClick={() => setPage((p) => p + 1)}
-          style={styles.pageBtn}
-        >
-          <ChevronRight size={18} />
-        </button>
+        <button disabled={page === 1} onClick={() => setPage(p => p - 1)} style={styles.pageBtn}><ChevronLeft/></button>
+        <span style={styles.pageText}>LAP {page} / {totalPages || 1}</span>
+        <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)} style={styles.pageBtn}><ChevronRight/></button>
       </footer>
     </div>
   );
@@ -348,88 +228,68 @@ export default function AdminDashboard() {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    background: "#0b0b0f",
+    backgroundColor: "#0b0b0f",
+    backgroundImage: "radial-gradient(circle at 2px 2px, #1a1a1a 1px, transparent 0)",
+    backgroundSize: "32px 32px",
     minHeight: "100vh",
     color: "#fff",
     padding: "20px 5%",
-    fontFamily: "system-ui",
+    fontFamily: "system-ui, -apple-system, sans-serif",
   },
   header: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 30,
+    borderBottom: "1px solid #2d2d37",
+    paddingBottom: 20,
   },
   logoBox: { display: "flex", alignItems: "center", gap: 12 },
-  title: { margin: 0, fontSize: 28, fontWeight: 900 },
-  telemetry: { color: "#FF1801", fontWeight: 700 },
-  nav: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 20 },
+  title: { fontSize: 28, fontWeight: 900, letterSpacing: -1, margin: 0 },
+  telemetry: { display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#FF1801", fontWeight: 700 },
+  blink: { width: 8, height: 8, borderRadius: "50%", background: "#FF1801" },
+  nav: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 30 },
   tab: {
-    padding: 15,
+    padding: "15px",
     border: "none",
     color: "#fff",
-    fontWeight: 800,
     cursor: "pointer",
+    fontWeight: 800,
+    fontSize: 14,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+    fontStyle: "italic",
   },
-  filterSection: { display: "flex", gap: 10, marginBottom: 20 },
+  filterSection: { marginBottom: 20, display: "flex", gap: 10 },
   select: {
     background: "#15151e",
     color: "#fff",
     border: "1px solid #2d2d37",
-    padding: "10px 15px",
+    padding: "10px 20px",
+    borderRadius: 0,
+    fontWeight: 600,
   },
-  subBtn: {
-    background: "#2d2d37",
-    color: "#fff",
-    border: "none",
-    padding: "10px 15px",
-    fontWeight: 700,
-    cursor: "pointer",
-  },
+  subBtn: { background: "#2d2d37", color: "#fff", border: "none", padding: "10px 15px", cursor: "pointer", fontWeight: 700 },
   main: { minHeight: "50vh" },
-  grid: { display: "flex", flexDirection: "column", gap: 12 },
+  grid: { display: "flex", flexDirection: "column", gap: 8 },
   card: {
-    background: "linear-gradient(135deg,#15151e,#1b1b24)",
-    border: "1px solid #2d2d37",
-    padding: "18px 20px",
-    borderLeft: "4px solid #FF1801",
-  },
-  cardTop: { display: "flex", justifyContent: "space-between", marginBottom: 6 },
-  code: {
-    background: "#fff",
-    color: "#000",
-    fontSize: 10,
-    fontWeight: 900,
-    padding: "3px 6px",
-  },
-  roleBadge: {
-    fontSize: 10,
-    fontWeight: 900,
-    padding: "4px 8px",
-    color: "#fff",
-  },
-  name: { fontSize: 18, fontWeight: 800, textTransform: "uppercase" },
-  bottom: { marginTop: 6 },
-  status: {
-    fontSize: 11,
-    fontWeight: 900,
-    padding: "4px 10px",
-  },
-  email: { fontSize: 12, color: "#888" },
-  footer: {
-    marginTop: 40,
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 20,
-  },
-  pageBtn: {
     background: "#15151e",
-    border: "1px solid #2d2d37",
-    color: "#fff",
-    padding: 10,
-    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    borderLeft: "4px solid #FF1801",
+    padding: "12px 20px",
+    transition: "0.2s",
   },
-  pageText: { fontWeight: 900, color: "#FF1801" },
-  loading: { textAlign: "center", padding: 100, fontWeight: 800 },
+  cardRank: { fontSize: 24, fontWeight: 900, color: "#2d2d37", width: 50, fontStyle: "italic" },
+  cardBody: { flex: 1 },
+  cardTop: { display: "flex", alignItems: "center", gap: 10, marginBottom: 4 },
+  code: { background: "#fff", color: "#000", fontSize: 10, fontWeight: 900, padding: "2px 5px" },
+  name: { fontSize: 18, fontWeight: 700, textTransform: "uppercase" },
+  cardBottom: { fontSize: 12, color: "#888", fontWeight: 500 },
+  footer: { display: "flex", justifyContent: "center", alignItems: "center", gap: 20, marginTop: 40, paddingBottom: 40 },
+  pageBtn: { background: "#15151e", border: "1px solid #2d2d37", color: "#fff", padding: 10, cursor: "pointer" },
+  pageText: { fontWeight: 800, color: "#FF1801", fontStyle: "italic" },
+  status: { textAlign: "center", padding: 100, fontWeight: 800, letterSpacing: 2 },
 };
