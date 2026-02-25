@@ -161,6 +161,7 @@ export default function AdminDashboard() {
             <button style={{...styles.subBtn, opacity: foodReceived ? 1 : 0.5}} onClick={() => setFoodReceived(true)}>Served</button>
             <button style={{...styles.subBtn, opacity: !foodReceived ? 1 : 0.5}} onClick={() => setFoodReceived(false)}>EMPTY</button>
             <select style={styles.select} value={mealType} onChange={(e) => setMealType(e.target.value)}>
+              <option value="HIGH_TEA">HIGH TEA</option>
               <option value="BREAKFAST">BREAKFAST</option>
               <option value="LUNCH">LUNCH</option>
               <option value="DINNER">DINNER</option>
@@ -197,8 +198,8 @@ export default function AdminDashboard() {
               style={styles.grid}
             >
               {paginatedData.map((item: any, i: number) => (
-                <motion.div 
-                  key={i} 
+                <motion.div
+                  key={i}
                   whileHover={{ x: 5, backgroundColor: "#1f1f27" }}
                   style={styles.card}
                 >

@@ -71,7 +71,7 @@ function TeamDetailsModal({ team, onClose }: { team: any; onClose: () => void })
 
             <div>
               <SectionHeader title="Pit Stop Logistics (Food)" />
-              {['BREAKFAST', 'LUNCH', 'DINNER'].map(meal => (
+              {['HIGH_TEA', 'BREAKFAST', 'LUNCH', 'DINNER'].map(meal => (
                 <div key={meal} style={{ marginBottom: 12 }}>
                   <div style={{ fontSize: 12, fontWeight: 800, color: "#475569" }}>{meal}</div>
                   <div style={{ fontSize: 13 }}>
@@ -79,6 +79,10 @@ function TeamDetailsModal({ team, onClose }: { team: any; onClose: () => void })
                       <span style={{ color: "#22c55e" }}>
                         {team.foodStatus[meal]
                           .map((email: string) => {
+                            if (team.lead?.email === email) {
+                              return team.lead.name.toUpperCase();
+                            }
+
                             const member = team.members.find(
                               (m: any) => m.email === email
                             );
