@@ -2,17 +2,28 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchTeams } from "../api/team.api";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Users, 
-  Utensils, 
-  Trophy, 
-  UserCheck, 
-  ChevronLeft, 
+import {
+  Users,
+  Utensils,
+  Trophy,
+  UserCheck,
+  ChevronLeft,
   ChevronRight,
   Zap
 } from "lucide-react";
 
 const PAGE_SIZE = 12;
+
+function useMediaQuery(query: string) {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [query]);
+  return matches;
+}
 
 export default function AdminDashboard() {
   const [teams, setTeams] = useState<any[]>([]);
@@ -25,6 +36,9 @@ export default function AdminDashboard() {
   const [mealType, setMealType] = useState("BREAKFAST");
   const [leadFilter, setLeadFilter] = useState("PRESENT");
   const [memberRoleFilter, setMemberRoleFilter] = useState("ALL");
+
+  const isMobile = useMediaQuery("(max-width: 600px)");
+  const isTablet = useMediaQuery("(max-width: 900px)");
 
   useEffect(() => {
     fetchTeams()
@@ -101,8 +115,8 @@ export default function AdminDashboard() {
   }, [allParticipants, memberRoleFilter]);
 
   const activeData =
-    section === "ATTENDANCE" ? attendanceData : 
-    section === "FOOD" ? foodData : 
+    section === "ATTENDANCE" ? attendanceData :
+    section === "FOOD" ? foodData :
     section === "LEADS" ? leadData : memberData;
 
   const totalPages = Math.ceil(activeData.length / PAGE_SIZE);
@@ -111,105 +125,257 @@ export default function AdminDashboard() {
     return activeData.slice(start, start + PAGE_SIZE);
   }, [activeData, page]);
 
+  const tabs = [
+    { id: "ATTENDANCE", label: "ATTENDANCE", shortLabel: "ATTN", icon: <UserCheck size={14} /> },
+    { id: "FOOD", label: "FOOD", shortLabel: "FOOD", icon: <Utensils size={14} /> },
+    { id: "LEADS", label: "LEADS", shortLabel: "LEADS", icon: <Trophy size={14} /> },
+    { id: "MEMBERS", label: "MEMBERS", shortLabel: "MBR", icon: <Users size={14} /> },
+  ];
+
   return (
-    <div style={styles.container}>
-      <header style={styles.header}>
-        <div style={styles.logoBox}>
-          <Zap fill="#FF1801" color="#FF1801" size={28} />
-          <h1 style={styles.title}>F1 <span style={{ color: "#FF1801" }}>Monitoring Page</span></h1>
+    <div style={{
+      backgroundColor: "#0b0b0f",
+      backgroundImage: "radial-gradient(circle at 2px 2px, #1a1a1a 1px, transparent 0)",
+      backgroundSize: "32px 32px",
+      minHeight: "100vh",
+      color: "#fff",
+      padding: isMobile ? "16px" : "20px 5%",
+      fontFamily: "system-ui, -apple-system, sans-serif",
+      boxSizing: "border-box",
+    }}>
+
+      {/* Header */}
+      <header style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: isMobile ? 20 : 30,
+        borderBottom: "1px solid #2d2d37",
+        paddingBottom: isMobile ? 14 : 20,
+        flexWrap: "wrap",
+        gap: 8,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <Zap fill="#FF1801" color="#FF1801" size={isMobile ? 20 : 28} />
+          <h1 style={{ fontSize: isMobile ? 18 : 28, fontWeight: 900, letterSpacing: -1, margin: 0 }}>
+            F1 <span style={{ color: "#FF1801" }}>Monitoring</span>
+          </h1>
         </div>
-        
-        <div style={styles.telemetry}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "#FF1801", fontWeight: 700 }}>
           <span>💞 Fast as Fuck 💞</span>
-          <div style={styles.blink} />
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#FF1801" }} />
         </div>
       </header>
 
-      <nav style={styles.nav}>
-        {[
-          { id: "ATTENDANCE", label: "ATTENDANCE", icon: <UserCheck size={16}/> },
-          { id: "FOOD", label: "FOOD", icon: <Utensils size={16}/> },
-          { id: "LEADS", label: "LEADS", icon: <Trophy size={16}/> },
-          { id: "MEMBERS", label: "MEMBERS", icon: <Users size={16}/> },
-        ].map((tab) => (
+      {/* Nav tabs */}
+      <nav style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(4, 1fr)",
+        gap: isMobile ? 6 : 10,
+        marginBottom: isMobile ? 16 : 30,
+      }}>
+        {tabs.map((tab) => (
           <motion.button
             key={tab.id}
-            whileHover={{ skewX: -10, scale: 1.05 }}
+            whileHover={{ skewX: -8, scale: 1.04 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => { setSection(tab.id); setPage(1); }}
             style={{
-              ...styles.tab,
+              padding: isMobile ? "10px 4px" : "15px",
+              border: "none",
               background: section === tab.id ? "#FF1801" : "#15151e",
               borderBottom: section === tab.id ? "4px solid #fff" : "4px solid transparent",
+              color: "#fff",
+              cursor: "pointer",
+              fontWeight: 800,
+              fontSize: isMobile ? 10 : 14,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: isMobile ? 4 : 8,
+              fontStyle: "italic",
+              flexDirection: isMobile ? "column" : "row",
+              textAlign: "center",
             }}
           >
-            {tab.icon} {tab.label}
+            {tab.icon}
+            <span>{isMobile ? tab.shortLabel : tab.label}</span>
           </motion.button>
         ))}
       </nav>
 
-      <div style={styles.filterSection}>
+      {/* Filters */}
+      <div style={{
+        marginBottom: isMobile ? 16 : 20,
+        display: "flex",
+        gap: 8,
+        flexWrap: "wrap",
+      }}>
         {section === "ATTENDANCE" && (
-          <select style={styles.select} value={attendanceFilter} onChange={(e) => setAttendanceFilter(e.target.value)}>
+          <select
+            style={selectStyle}
+            value={attendanceFilter}
+            onChange={(e) => { setAttendanceFilter(e.target.value); setPage(1); }}
+          >
             <option value="PRESENT">PRESENT</option>
             <option value="ABSENT">ABSENT</option>
           </select>
         )}
 
         {section === "FOOD" && (
-          <div style={{ display: "flex", gap: 10 }}>
-            <button style={{...styles.subBtn, opacity: foodReceived ? 1 : 0.5}} onClick={() => setFoodReceived(true)}>Served</button>
-            <button style={{...styles.subBtn, opacity: !foodReceived ? 1 : 0.5}} onClick={() => setFoodReceived(false)}>EMPTY</button>
-            <select style={styles.select} value={mealType} onChange={(e) => setMealType(e.target.value)}>
+          <>
+            <button
+              style={{ ...subBtnStyle, opacity: foodReceived ? 1 : 0.5 }}
+              onClick={() => { setFoodReceived(true); setPage(1); }}
+            >
+              Served
+            </button>
+            <button
+              style={{ ...subBtnStyle, opacity: !foodReceived ? 1 : 0.5 }}
+              onClick={() => { setFoodReceived(false); setPage(1); }}
+            >
+              EMPTY
+            </button>
+            <select
+              style={selectStyle}
+              value={mealType}
+              onChange={(e) => { setMealType(e.target.value); setPage(1); }}
+            >
               <option value="HIGH_TEA">HIGH TEA</option>
               <option value="BREAKFAST">BREAKFAST</option>
               <option value="LUNCH">LUNCH</option>
               <option value="DINNER">DINNER</option>
             </select>
-          </div>
+          </>
         )}
 
         {section === "LEADS" && (
-          <select style={styles.select} value={leadFilter} onChange={(e) => setLeadFilter(e.target.value)}>
+          <select
+            style={selectStyle}
+            value={leadFilter}
+            onChange={(e) => { setLeadFilter(e.target.value); setPage(1); }}
+          >
             <option value="PRESENT">PRESENT</option>
             <option value="ABSENT">ABSENT</option>
           </select>
         )}
 
         {section === "MEMBERS" && (
-          <select style={styles.select} value={memberRoleFilter} onChange={(e) => setMemberRoleFilter(e.target.value)}>
+          <select
+            style={selectStyle}
+            value={memberRoleFilter}
+            onChange={(e) => { setMemberRoleFilter(e.target.value); setPage(1); }}
+          >
             <option value="ALL">ALL</option>
             <option value="LEADER">LEADER</option>
             <option value="MEMBER">MEMBER</option>
           </select>
         )}
+
+        {/* Count badge */}
+        <div style={{
+          marginLeft: "auto",
+          background: "#15151e",
+          border: "1px solid #2d2d37",
+          padding: "8px 14px",
+          fontWeight: 800,
+          fontSize: 12,
+          color: "#FF1801",
+          fontStyle: "italic",
+          display: "flex",
+          alignItems: "center",
+        }}>
+          {activeData.length} ENTRIES
+        </div>
       </div>
 
-      <main style={styles.main}>
+      {/* Main content */}
+      <main style={{ minHeight: "50vh" }}>
         <AnimatePresence mode="wait">
           {loading ? (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={styles.status}>LOADING ENGINE...</motion.div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              style={{ textAlign: "center", padding: 100, fontWeight: 800, letterSpacing: 2 }}
+            >
+              LOADING ENGINE...
+            </motion.div>
+          ) : paginatedData.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              style={{ textAlign: "center", padding: 80, fontWeight: 800, letterSpacing: 2, color: "#2d2d37" }}
+            >
+              NO DATA FOUND
+            </motion.div>
           ) : (
             <motion.div
               key={section + page}
               initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -20, opacity: 0 }}
-              style={styles.grid}
+              style={{ display: "flex", flexDirection: "column", gap: isMobile ? 6 : 8 }}
             >
               {paginatedData.map((item: any, i: number) => (
                 <motion.div
                   key={i}
-                  whileHover={{ x: 5, backgroundColor: "#1f1f27" }}
-                  style={styles.card}
+                  whileHover={{ x: isMobile ? 2 : 5, backgroundColor: "#1f1f27" }}
+                  style={{
+                    background: "#15151e",
+                    display: "flex",
+                    alignItems: "center",
+                    borderLeft: "4px solid #FF1801",
+                    padding: isMobile ? "10px 12px" : "12px 20px",
+                    transition: "0.2s",
+                    gap: isMobile ? 8 : 0,
+                  }}
                 >
-                  <div style={styles.cardRank}>{((page - 1) * PAGE_SIZE) + i + 1}</div>
-                  <div style={styles.cardBody}>
-                    <div style={styles.cardTop}>
-                      <span style={styles.code}>{item.teamCode || "F1"}</span>
-                      <span style={styles.name}>{item.name || item.lead.name}</span>
+                  {/* Rank */}
+                  <div style={{
+                    fontSize: isMobile ? 16 : 24,
+                    fontWeight: 900,
+                    color: "#2d2d37",
+                    width: isMobile ? 36 : 50,
+                    fontStyle: "italic",
+                    flexShrink: 0,
+                  }}>
+                    {((page - 1) * PAGE_SIZE) + i + 1}
+                  </div>
+
+                  {/* Body */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+                      <span style={{
+                        background: "#fff",
+                        color: "#000",
+                        fontSize: isMobile ? 9 : 10,
+                        fontWeight: 900,
+                        padding: "2px 5px",
+                        flexShrink: 0,
+                      }}>
+                        {item.teamCode || "F1"}
+                      </span>
+                      <span style={{
+                        fontSize: isMobile ? 14 : 18,
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}>
+                        {item.name || item.lead?.name}
+                      </span>
                     </div>
-                    <div style={styles.cardBottom}>{item.role} | {item.email || item.teamName}</div>
+                    <div style={{
+                      fontSize: isMobile ? 11 : 12,
+                      color: "#888",
+                      fontWeight: 500,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}>
+                      {item.role} | {item.email || item.teamName}
+                    </div>
                   </div>
                 </motion.div>
               ))}
@@ -218,79 +384,70 @@ export default function AdminDashboard() {
         </AnimatePresence>
       </main>
 
-      <footer style={styles.footer}>
-        <button disabled={page === 1} onClick={() => setPage(p => p - 1)} style={styles.pageBtn}><ChevronLeft/></button>
-        <span style={styles.pageText}>LAP {page} / {totalPages || 1}</span>
-        <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)} style={styles.pageBtn}><ChevronRight/></button>
+      {/* Pagination footer */}
+      <footer style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: isMobile ? 12 : 20,
+        marginTop: isMobile ? 24 : 40,
+        paddingBottom: 40,
+      }}>
+        <button
+          disabled={page === 1}
+          onClick={() => setPage(p => p - 1)}
+          style={{
+            background: "#15151e",
+            border: "1px solid #2d2d37",
+            color: page === 1 ? "#2d2d37" : "#fff",
+            padding: isMobile ? 8 : 10,
+            cursor: page === 1 ? "not-allowed" : "pointer",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <ChevronLeft size={isMobile ? 16 : 20} />
+        </button>
+        <span style={{ fontWeight: 800, color: "#FF1801", fontStyle: "italic", fontSize: isMobile ? 13 : 16 }}>
+          LAP {page} / {totalPages || 1}
+        </span>
+        <button
+          disabled={page >= totalPages}
+          onClick={() => setPage(p => p + 1)}
+          style={{
+            background: "#15151e",
+            border: "1px solid #2d2d37",
+            color: page >= totalPages ? "#2d2d37" : "#fff",
+            padding: isMobile ? 8 : 10,
+            cursor: page >= totalPages ? "not-allowed" : "pointer",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <ChevronRight size={isMobile ? 16 : 20} />
+        </button>
       </footer>
     </div>
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    backgroundColor: "#0b0b0f",
-    backgroundImage: "radial-gradient(circle at 2px 2px, #1a1a1a 1px, transparent 0)",
-    backgroundSize: "32px 32px",
-    minHeight: "100vh",
-    color: "#fff",
-    padding: "20px 5%",
-    fontFamily: "system-ui, -apple-system, sans-serif",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 30,
-    borderBottom: "1px solid #2d2d37",
-    paddingBottom: 20,
-  },
-  logoBox: { display: "flex", alignItems: "center", gap: 12 },
-  title: { fontSize: 28, fontWeight: 900, letterSpacing: -1, margin: 0 },
-  telemetry: { display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#FF1801", fontWeight: 700 },
-  blink: { width: 8, height: 8, borderRadius: "50%", background: "#FF1801" },
-  nav: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 30 },
-  tab: {
-    padding: "15px",
-    border: "none",
-    color: "#fff",
-    cursor: "pointer",
-    fontWeight: 800,
-    fontSize: 14,
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-    fontStyle: "italic",
-  },
-  filterSection: { marginBottom: 20, display: "flex", gap: 10 },
-  select: {
-    background: "#15151e",
-    color: "#fff",
-    border: "1px solid #2d2d37",
-    padding: "10px 20px",
-    borderRadius: 0,
-    fontWeight: 600,
-  },
-  subBtn: { background: "#2d2d37", color: "#fff", border: "none", padding: "10px 15px", cursor: "pointer", fontWeight: 700 },
-  main: { minHeight: "50vh" },
-  grid: { display: "flex", flexDirection: "column", gap: 8 },
-  card: {
-    background: "#15151e",
-    display: "flex",
-    alignItems: "center",
-    borderLeft: "4px solid #FF1801",
-    padding: "12px 20px",
-    transition: "0.2s",
-  },
-  cardRank: { fontSize: 24, fontWeight: 900, color: "#2d2d37", width: 50, fontStyle: "italic" },
-  cardBody: { flex: 1 },
-  cardTop: { display: "flex", alignItems: "center", gap: 10, marginBottom: 4 },
-  code: { background: "#fff", color: "#000", fontSize: 10, fontWeight: 900, padding: "2px 5px" },
-  name: { fontSize: 18, fontWeight: 700, textTransform: "uppercase" },
-  cardBottom: { fontSize: 12, color: "#888", fontWeight: 500 },
-  footer: { display: "flex", justifyContent: "center", alignItems: "center", gap: 20, marginTop: 40, paddingBottom: 40 },
-  pageBtn: { background: "#15151e", border: "1px solid #2d2d37", color: "#fff", padding: 10, cursor: "pointer" },
-  pageText: { fontWeight: 800, color: "#FF1801", fontStyle: "italic" },
-  status: { textAlign: "center", padding: 100, fontWeight: 800, letterSpacing: 2 },
+const selectStyle: React.CSSProperties = {
+  background: "#15151e",
+  color: "#fff",
+  border: "1px solid #2d2d37",
+  padding: "10px 16px",
+  borderRadius: 0,
+  fontWeight: 600,
+  fontSize: 13,
+  cursor: "pointer",
+};
+
+const subBtnStyle: React.CSSProperties = {
+  background: "#2d2d37",
+  color: "#fff",
+  border: "none",
+  padding: "10px 14px",
+  cursor: "pointer",
+  fontWeight: 700,
+  fontSize: 13,
 };
